@@ -3,28 +3,36 @@ import "./chatlist.css";
 import ChatListItems from "./chatListItems";
 import axios from "axios";
 import _ from "lodash";
+// import { MDBSpinner } from "";
 
-const ChatList = ({ conversation, currentUser, setChatUserName }) => {
-  const [user, setUser] = useState();
+const ChatList = ({ setChatUserName, setCurrentChat }) => {
+  const [loginId, setLoginId] = useState();
+  const [loading, setLoading] = useState(true); // Added loading state
+  const [conversations, setConversations] = useState();
 
   useEffect(() => {
-    const friendId = conversation.members.find((m) => m !== currentUser);
+    const userid = localStorage.getItem("userId");
+    setLoginId(userid);
+  }, []);
 
-    console.log("friendId: " + friendId);
-
-    const getUser = async () => {
+  useEffect(() => {
+    const getConversation = async () => {
       try {
-        const res = await axios.get(
-          "https://socket-chat-app-3v3p.onrender.com/api/getone?userId=" +
-            friendId
-        );
-        setUser(res.data);
+        if (loginId) {
+          // Added a check for loginId
+          const res = await axios.get(
+            `https://socket-chat-app-3v3p.onrender.com/conversation/${loginId}`
+          );
+          setConversations(res.data);
+        }
+        setLoading(false); // Set loading to false after API call
       } catch (error) {
         console.log(error);
+        setLoading(false); // Set loading to false in case of error
       }
     };
-    getUser();
-  }, [currentUser, conversation]);
+    getConversation();
+  }, [loginId]);
 
   return (
     <div className="main__chatlist">
@@ -49,31 +57,25 @@ const ChatList = ({ conversation, currentUser, setChatUserName }) => {
       </div>
 
       <div className="chatlist__items">
-        {conversation &&
-          conversation.map((item, index) => {
+        {loading ? (
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        ) : (
+          conversations &&
+          _.map(conversations, (item, index) => {
             return (
-              <ChatListItems
-                key={index}
-                conversation={user}
-                currentUser={currentUser}
-                animationDelay={index + 1}
-                setChatUserName={setChatUserName}
-              />
+              <div onClick={() => setCurrentChat(item)}>
+                <ChatListItems
+                  conversation={item}
+                  currentUser={loginId}
+                  animationDelay={index + 1}
+                  setChatUserName={setChatUserName}
+                />
+              </div>
             );
-          })}
-
-        {/* {allChatUsers.map((item, index) => {
-          return (
-            <ChatListItems
-              name={item.name}
-              key={item.id}
-              animationDelay={index + 1}
-              active={item.active ? "active" : ""}
-              isOnline={item.isOnline ? "active" : ""}
-              image={item.image}
-            />
-          );
-        })} */}
+          })
+        )}
       </div>
     </div>
   );

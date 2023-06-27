@@ -8,80 +8,11 @@ const ChatContent = ({
   loginId,
   userMessages,
   sendMessages,
-  allUsers,
   chatUserName,
+  setMsg,
+  msg,
 }) => {
-  console.log("userMessages", userMessages);
-
-  // useEffect(() => {
-  //   const getUser = async () => {
-  //     try {
-  //       const res = await axios(
-  //         "https://socket-chat-app-3v3p.onrender.com/api/getone?name=" +
-  //           chatUserName
-  //       );
-  //       setFilterUser(res.data);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   };
-  //   getUser();
-  // }, [chatUserName, loginId]);
-
-  const [filterUser, setFilterUser] = useState();
   const messagesEndRef = useRef(null);
-
-  const chatItms = [
-    {
-      key: 1,
-      image:
-        "https://pbs.twimg.com/profile_images/1116431270697766912/-NfnQHvh_400x400.jpg",
-      type: "",
-      msg: "Hi Tim, How are you?",
-    },
-    {
-      key: 2,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTA78Na63ws7B7EAWYgTr9BxhX_Z8oLa1nvOA&usqp=CAU",
-      type: "other",
-      msg: "I am fine.",
-    },
-    {
-      key: 3,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTA78Na63ws7B7EAWYgTr9BxhX_Z8oLa1nvOA&usqp=CAU",
-      type: "other",
-      msg: "What about you?",
-    },
-    {
-      key: 4,
-      image:
-        "https://pbs.twimg.com/profile_images/1116431270697766912/-NfnQHvh_400x400.jpg",
-      type: "",
-      msg: "Awesome these days.",
-    },
-    {
-      key: 5,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTA78Na63ws7B7EAWYgTr9BxhX_Z8oLa1nvOA&usqp=CAU",
-      type: "other",
-      msg: "Finally. What's the plan?",
-    },
-    {
-      key: 6,
-      image:
-        "https://pbs.twimg.com/profile_images/1116431270697766912/-NfnQHvh_400x400.jpg",
-      type: "",
-      msg: "what plan mate?",
-    },
-    {
-      key: 7,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTA78Na63ws7B7EAWYgTr9BxhX_Z8oLa1nvOA&usqp=CAU",
-      type: "other",
-      msg: "I'm taliking about the tutorial",
-    },
-  ];
 
   return (
     <div className="main__chatcontent">
@@ -106,25 +37,14 @@ const ChatContent = ({
       </div>
       <div className="content__body">
         <div className="chat__items">
-          {/* {chatItms.map((itm, index) => {
-            return (
-              <ChatItem
-                animationDelay={index + 2}
-                key={itm.key}
-                user={itm.type ? itm.type : "me"}
-                msg={itm.msg}
-                image={itm.image}
-              />
-            );
-          })} */}
           {userMessages.map((itm, index) => {
             return (
               <ChatItem
                 animationDelay={index + 2}
                 key={itm._id}
-                user={itm.senderId ? itm.senderId : "me"}
+                user={itm}
+                loginId={loginId}
                 msg={itm.text}
-                image={itm.profileImg}
               />
             );
           })}
@@ -137,8 +57,13 @@ const ChatContent = ({
           <button className="addFiles">
             <i className="fa fa-plus"></i>
           </button>
-          <input type="text" placeholder="Type a message here" />
-          <button className="btnSendMsg" id="sendMsgBtn">
+          <input
+            type="text"
+            placeholder="Type a message here"
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+          />
+          <button className="btnSendMsg" id="sendMsgBtn" onClick={sendMessages}>
             <i className="fa fa-paper-plane"></i>
           </button>
         </div>
