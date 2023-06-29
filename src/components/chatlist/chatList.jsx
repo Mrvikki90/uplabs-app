@@ -5,23 +5,28 @@ import axios from "axios";
 import _ from "lodash";
 // import { MDBSpinner } from "";
 
-const ChatList = ({ setChatUserName, setCurrentChat }) => {
-  const [loginId, setLoginId] = useState();
+const ChatList = ({ setChatUserName, setCurrentChat, currentUser }) => {
+  // const [loginId, setLoginId] = useState();
   const [loading, setLoading] = useState(true); // Added loading state
   const [conversations, setConversations] = useState();
 
-  useEffect(() => {
-    const userid = localStorage.getItem("userId");
-    setLoginId(userid);
-  }, []);
+  // useEffect(() => {
+  //   const userid = localStorage.getItem("userId");
+  //   setLoginId(userid);
+  // }, []);
+
+  const handleSelectChat = (conversation) => {
+    console.log("Selected chat:", conversation);
+    setCurrentChat(conversation);
+  };
 
   useEffect(() => {
     const getConversation = async () => {
       try {
-        if (loginId) {
+        if (currentUser) {
           // Added a check for loginId
           const res = await axios.get(
-            `https://socket-chat-app-3v3p.onrender.com/conversation/${loginId}`
+            `https://socket-chat-app-3v3p.onrender.com/conversation/${currentUser}`
           );
           setConversations(res.data);
         }
@@ -32,7 +37,7 @@ const ChatList = ({ setChatUserName, setCurrentChat }) => {
       }
     };
     getConversation();
-  }, [loginId]);
+  }, [currentUser]);
 
   return (
     <div className="main__chatlist">
@@ -65,10 +70,10 @@ const ChatList = ({ setChatUserName, setCurrentChat }) => {
           conversations &&
           _.map(conversations, (item, index) => {
             return (
-              <div onClick={() => setCurrentChat(item)}>
+              <div onClick={() => handleSelectChat(item)}>
                 <ChatListItems
                   conversation={item}
-                  currentUser={loginId}
+                  currentUser={currentUser}
                   animationDelay={index + 1}
                   setChatUserName={setChatUserName}
                 />

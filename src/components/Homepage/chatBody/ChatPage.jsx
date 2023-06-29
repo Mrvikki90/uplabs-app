@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-
+import { useLocation } from "react-router-dom";
 import ChatContent from "../../chatContent/chatContent";
 import ChatList from "../../chatlist/chatList";
 import UserProfile from "../../userProfile/userProfile";
@@ -9,45 +9,44 @@ import _ from "lodash";
 import { io } from "socket.io-client";
 
 const ChatPage = () => {
-  const [loginId, setLoginId] = useState();
+  const location = useLocation();
+
   const [conversations, setConversations] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [filterUsers, setFilterUsers] = useState();
   const [currentChat, setCurrentChat] = useState();
-  const [arrivalMessage, setArrivalMessage] = useState(null);
+  const [arrivalMessage, setArrivalMessage] = useState();
   const [userMessages, setMessages] = useState([]);
   const [msg, setMsg] = useState();
-  const [startChatData, setSartChatData] = useState();
   const [chatUserName, setChatUserName] = useState();
+
+  // Check if the socket ID is stored in localStorage
+  const {
+    user,
+    user: { _id },
+    // user: { profileImg },
+  } = location.state;
 
   const isMountedRef = useRef(false);
   const isFirstRun = useRef(true);
 
-  // Check if the socket ID is stored in localStorage
-  const storedSocketId = localStorage.getItem("socketId");
-
   // Connect to the socket server using the stored socket ID or generate a new one
-  const socket = io("https://socket-chat-app-3v3p.onrender.com", {
-    query: {
-      socketId: storedSocketId || null,
-    },
-  });
+  const socket = io("https://socket-chat-app-3v3p.onrender.com");
 
   useEffect(() => {
-    const userid = localStorage.getItem("userId");
-    setLoginId(userid);
-  }, []);
+    if (isFirstRun.current) {
+      console.log("socketStart");
+      socket.on("connect", () => {
+        console.log("Connected to server", socket);
+      });
+      isFirstRun.current = false;
+    }
+  }, [socket]);
 
   useEffect(() => {
-    // Store the socket ID in localStorage when the connection is established
-    socket.on("connect", () => {
-      const socketId = socket.id;
-      localStorage.setItem("socketId", socketId);
-    });
-
+    console.log("arrival use effect");
     // Set the mounted state to true
     isMountedRef.current = true;
-
     const handleReceiveMessage = (data) => {
       console.log("arrival message :", data);
       if (isMountedRef.current) {
@@ -58,10 +57,8 @@ const ChatPage = () => {
         });
       }
     };
-
     // Attach the event listener
     socket.on("getMessage", handleReceiveMessage);
-
     // Clean up the event listener and reset the mounted state when the component unmounts
     return () => {
       isMountedRef.current = false;
@@ -70,37 +67,30 @@ const ChatPage = () => {
   }, []); // Empty dependency array
 
   useEffect(() => {
-    console.log("arrivals message", arrivalMessage);
     arrivalMessage &&
       currentChat?.members.includes(arrivalMessage.sender) &&
       setMessages((prev) => [...prev, arrivalMessage]);
   }, [arrivalMessage, currentChat]);
 
   useEffect(() => {
-    if (loginId && socket) {
-      if (socket.connected) {
-        socket.emit("addUser", loginId);
-      } else {
-        socket.on("connect", () => {
-          socket.emit("addUser", loginId);
-        });
-      }
-    }
-  }, [loginId, socket]);
+    console.log("add user useEffect runs", user._id);
+    socket.emit("addUser", user._id);
+  }, []);
 
   useEffect(() => {
     const getConversation = async () => {
       try {
         const res = await axios.get(
-          `https://socket-chat-app-3v3p.onrender.com/conversation/${loginId}`
+          `https://socket-chat-app-3v3p.onrender.com/conversation/${_id}`
         );
+
         setConversations(res.data);
       } catch (error) {
         console.log(error);
       }
     };
     getConversation();
-  }, [loginId]);
+  }, [_id]);
 
   useEffect(() => {
     if (conversations) {
@@ -124,7 +114,7 @@ const ChatPage = () => {
       setAllUsers(res.data);
     };
     getAllUsers();
-  }, [conversations]);
+  }, [user]);
 
   useEffect(() => {
     const getMessages = async () => {
@@ -132,7 +122,6 @@ const ChatPage = () => {
         const res = await axios.get(
           `https://socket-chat-app-3v3p.onrender.com/messages/${currentChat._id}`
         );
-
         setMessages(res.data);
       } catch (error) {
         console.log(error);
@@ -142,20 +131,15 @@ const ChatPage = () => {
   }, [currentChat]);
 
   const sendMessages = async () => {
-    // console.log("currentchat", currentChat);
-
     const message = {
       conversationId: currentChat._id,
-      sender: loginId,
+      sender: _id,
       text: msg,
     };
-    const receiverId = currentChat.members.find((m) => m !== loginId);
-
-    // console.log("receiverId: ", receiverId);
-
+    const receiverId = currentChat.members.find((m) => m !== _id);
     try {
       socket.emit("sendMessage", {
-        senderId: loginId,
+        senderId: _id,
         receiverId: receiverId,
         text: msg,
       });
@@ -168,11 +152,11 @@ const ChatPage = () => {
         "https://socket-chat-app-3v3p.onrender.com/messages",
         message
       );
-      setMsg(" ");
       setMessages([...userMessages, res.data]);
     } catch (error) {
       console.log(error);
     }
+    return setMsg("");
   };
 
   return (
@@ -180,10 +164,11 @@ const ChatPage = () => {
       <ChatList
         setChatUserName={setChatUserName}
         setCurrentChat={setCurrentChat}
+        currentUser={_id}
       />
 
       <ChatContent
-        loginId={loginId}
+        loginId={_id}
         userMessages={userMessages}
         sendMessages={sendMessages}
         allUsers={allUsers}

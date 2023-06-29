@@ -1,8 +1,7 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 import ChatItem from "./chatItems";
 import "./chatcontent.css";
 import Avatar from "../chatlist/Avatar";
-import axios from "axios";
 
 const ChatContent = ({
   loginId,

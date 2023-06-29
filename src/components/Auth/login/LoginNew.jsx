@@ -6,7 +6,6 @@ import {
   MDBBtn,
   MDBIcon,
   MDBInput,
-  MDBCheckbox,
 } from "mdb-react-ui-kit";
 import { FormControl, FormErrorMessage } from "@chakra-ui/react";
 import "./login.css";
@@ -14,7 +13,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import loginSchema from "../../../Schema/loginSchema";
 
 function App() {
@@ -40,10 +39,8 @@ function App() {
       );
       reset();
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userId", response.data.user._id);
-
       if (response.status === 200) {
-        navigate("/home");
+        navigate("/home", { state: response.data });
         return toast(`${response.data.message}`, {
           position: "top-right",
           autoClose: 1000,
